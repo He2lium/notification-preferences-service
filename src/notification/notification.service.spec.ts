@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { NotificationService } from './notification.service';
 import { NotificationChannelEnum } from '@global/types/notification-channel.enum';

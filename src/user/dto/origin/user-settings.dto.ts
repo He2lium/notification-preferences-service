@@ -1,12 +1,9 @@
 import { UserSettingsEntity } from '../../entities/user-settings.entity';
-import { RegionEnum } from '@global/types/region.enum';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsBoolean,
-  IsEnum,
   IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
   Max,

@@ -3,7 +3,7 @@ import { NotificationChannelEnum } from '@global/types/notification-channel.enum
 import { RegionEnum } from '@global/types/region.enum';
 import { UserIdDto } from '@global/dto/user-id.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsDateString, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty } from 'class-validator';
 import { applyDecorators } from '@nestjs/common';
 
 const EnumProperty = (_enum: object) =>

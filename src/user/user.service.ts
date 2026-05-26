@@ -4,7 +4,6 @@ import { UserSettingsEntity } from './entities/user-settings.entity';
 import { Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { DbService } from '../db/db.service';
-import { UserSettingsDto } from './dto/origin/user-settings.dto';
 import { UserResponseDto } from './dto/response/user-response.dto';
 import { UserSettingFieldsType } from '@global/types/user-setting-fields.type';
 import { ConfigService } from '@nestjs/config';

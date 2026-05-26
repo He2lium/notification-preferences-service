@@ -41,9 +41,11 @@ describe('UserService', () => {
         {
           provide: ConfigService,
           useValue: {
-            getOrThrow: jest.fn().mockReturnValue(
-              '{"region":"ru","quiet_start":"10:00:00","quiet_end":"18:00:00","timezone_offset":180,"kind_delivery_status":true,"kind_marketing":false,"kind_transactional":true,"channel_email":true,"channel_push":true,"channel_sms":false,"channel_telegram":false,"channel_vk":false}',
-            ),
+            getOrThrow: jest
+              .fn()
+              .mockReturnValue(
+                '{"region":"ru","quiet_start":"10:00:00","quiet_end":"18:00:00","timezone_offset":180,"kind_delivery_status":true,"kind_marketing":false,"kind_transactional":true,"channel_email":true,"channel_push":true,"channel_sms":false,"channel_telegram":false,"channel_vk":false}',
+              ),
           },
         },
       ],

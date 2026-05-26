@@ -7,7 +7,6 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { RegionEnum } from '@global/types/region.enum';
 import { UserSettingFieldsType } from '@global/types/user-setting-fields.type';
 import { UserEntity } from './user.entity';
 import { GeoSettingsType } from '@global/types/geo-settings.type';

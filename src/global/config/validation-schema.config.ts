@@ -1,5 +1,4 @@
 import * as Joi from 'joi';
-import { UserSettingFieldsType } from '@global/types/user-setting-fields.type';
 
 const JsonValidate: Joi.CustomValidator = (value, helpers) => {
   try {
