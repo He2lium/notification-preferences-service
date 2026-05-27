@@ -4,6 +4,12 @@ import { NotificationChannelEnum } from '@global/types/notification-channel.enum
 import { NotificationKindEnum } from '@global/types/notification-kind.enum';
 import { RegionEnum } from '@global/types/region.enum';
 import { UserService } from '../user/user.service';
+import { MetricsService } from '../metrics/metrics.service';
+
+const mockMetrics = {
+  increment: jest.fn(),
+  timing: jest.fn(),
+} as unknown as MetricsService;
 
 function createService(policies: unknown) {
   const mockConfig = {
@@ -12,6 +18,7 @@ function createService(policies: unknown) {
   return new NotificationService(
     mockConfig as unknown as ConfigService,
     null as unknown as UserService,
+    mockMetrics,
   );
 }
 
@@ -29,6 +36,7 @@ function createServiceWithUser(
     service: new NotificationService(
       mockConfig as unknown as ConfigService,
       mockUserService as unknown as UserService,
+      mockMetrics,
     ),
     mockUserService,
   };
@@ -310,10 +318,22 @@ describe('NotificationService', () => {
   });
 
   describe('evaluate', () => {
+    const evaluateAndCatch = async (
+      service: NotificationService,
+      dto: Parameters<NotificationService['evaluate']>[0],
+    ) => {
+      try {
+        return await service.evaluate(dto);
+      } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return (e as { getResponse: () => unknown }).getResponse();
+      }
+    };
+
     it('returns allow when all checks pass', async () => {
       const { service } = createServiceWithUser([], DEFAULT_USER_SETTINGS);
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -336,7 +356,7 @@ describe('NotificationService', () => {
         DEFAULT_USER_SETTINGS,
       );
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -353,7 +373,7 @@ describe('NotificationService', () => {
     it('returns deny when blocked by quiet hours policy', async () => {
       const { service } = createServiceWithUser([], DEFAULT_USER_SETTINGS);
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -373,7 +393,7 @@ describe('NotificationService', () => {
         channel_email: false,
       });
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -393,7 +413,7 @@ describe('NotificationService', () => {
         kind_marketing: false,
       });
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -419,7 +439,7 @@ describe('NotificationService', () => {
         DEFAULT_USER_SETTINGS,
       );
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -439,7 +459,7 @@ describe('NotificationService', () => {
         channel_email: false,
       });
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -460,7 +480,7 @@ describe('NotificationService', () => {
         kind_marketing: false,
       });
 
-      const result = await service.evaluate({
+      const result = await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.EMAIL,
         kind: NotificationKindEnum.MARKETING,
         region: RegionEnum.EU,
@@ -480,7 +500,7 @@ describe('NotificationService', () => {
         DEFAULT_USER_SETTINGS,
       );
 
-      await service.evaluate({
+      await evaluateAndCatch(service, {
         channel: NotificationChannelEnum.PUSH,
         kind: NotificationKindEnum.TRANSACTIONAL,
         region: RegionEnum.US,

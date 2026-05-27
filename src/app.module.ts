@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { DbModule } from './db/db.module';
 import { NotificationModule } from './notification/notification.module';
 import { ConfigProvider } from '@global/providers/config.provider';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ConfigProvider } from '@global/providers/config.provider';
     UserModule,
     DbModule,
     NotificationModule,
+    MetricsModule,
   ],
 })
 export class AppModule {}

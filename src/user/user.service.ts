@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserSettingsEntity } from './entities/user-settings.entity';
 import { Repository } from 'typeorm';
@@ -8,10 +8,12 @@ import { UserResponseDto } from './dto/response/user-response.dto';
 import { UserSettingFieldsType } from '@global/types/user-setting-fields.type';
 import { ConfigService } from '@nestjs/config';
 import { UserCreateDto } from './dto/create/user-create.dto';
+import { UserSettingsModificationDto } from './dto/update/user-settings-modification.dto';
 
 @Injectable()
 export class UserService {
   private readonly _default_settings: UserSettingFieldsType;
+  private readonly logger = new Logger(UserService.name);
 
   constructor(
     @InjectRepository(UserSettingsEntity)
@@ -52,6 +54,7 @@ export class UserService {
     }
   }
 
+  // TODO [Metrics]: incrementCounter('user_upsert_total')
   async upsert(data: UserCreateDto): Promise<UserResponseDto> {
     const { id: user_id, settings } = data;
     return this._dbService.transaction<UserResponseDto>(async (q) => {
@@ -68,7 +71,45 @@ export class UserService {
         relations: { settings: true },
       });
 
+      this.logger.log({ user_id, hasSettings: !!settings }, 'User upserted');
+
       return this._setDefaultSettingsIfNull(user);
+    });
+  }
+
+  // TODO [Metrics]: incrementCounter('user_settings_modified_total')
+  async modify_settings(
+    user_id: number,
+    settings: UserSettingsModificationDto,
+  ): Promise<UserResponseDto> {
+    return this._dbService.transaction<UserResponseDto>(async (q) => {
+      const existing = await q.manager.findOne(UserSettingsEntity, {
+        where: { user_id },
+      });
+
+      const partial: Partial<UserSettingsEntity> = {};
+      for (const [key, value] of Object.entries(settings)) {
+        if (value !== undefined) partial[key] = value;
+      }
+
+      if (existing) {
+        await q.manager.save(UserSettingsEntity, { ...existing, ...partial });
+      } else {
+        await q.manager.save(UserSettingsEntity, {
+          user_id,
+          ...this._default_settings,
+          ...partial,
+        });
+      }
+
+      const updated = await q.manager.findOneOrFail(UserEntity, {
+        where: { id: user_id },
+        relations: { settings: true },
+      });
+
+      this.logger.log({ user_id, settings: partial }, 'UserSettings modified');
+
+      return this._setDefaultSettingsIfNull(updated);
     });
   }
 

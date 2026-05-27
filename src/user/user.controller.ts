@@ -1,9 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Put,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserResponseDto } from './dto/response/user-response.dto';
 import { UserIdDto } from '@global/dto/user-id.dto';
 import { UserCreateDto } from './dto/create/user-create.dto';
+import { UserSettingsModificationDto } from './dto/update/user-settings-modification.dto';
+import { UserSettingsResponseDto } from './dto/response/user-settings-response.dto';
 
 @Controller('user')
 @ApiTags('user')
@@ -22,6 +32,16 @@ export class UserController {
   @ApiOkResponse({ type: UserResponseDto })
   upsertUser(@Body() data: UserCreateDto) {
     return this._userService.upsert(data);
+  }
+
+  @Patch(':user_id')
+  @ApiOperation({ summary: 'Modify user settings' })
+  @ApiOkResponse({ type: UserSettingsResponseDto })
+  patchSettings(
+    @Param() { user_id }: UserIdDto,
+    @Body() settings: UserSettingsModificationDto,
+  ) {
+    return this._userService.modify_settings(user_id, settings);
   }
 
   @Delete(':user_id')

@@ -1,0 +1,30 @@
+# deps
+node_modules
+
+# build
+dist
+
+# git
+.git
+.gitignore
+
+# tests
+coverage
+
+# env
+.env
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# misc
+*.md
+!README.md

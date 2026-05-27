@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GlobalPolicyType } from '@global/types/global-policies.type';
 import { NotificationChannelEnum } from '@global/types/notification-channel.enum';
@@ -8,13 +8,17 @@ import { RegionEnum } from '@global/types/region.enum';
 import { GeoSettingsType } from '@global/types/geo-settings.type';
 import { UserService } from '../user/user.service';
 import { NotificationEvaluationDto } from './dto/notification-evaluation.dto';
+import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()
 export class NotificationService {
   private readonly _global_policies: GlobalPolicyType[];
+  private readonly logger = new Logger(NotificationService.name);
+
   constructor(
     private readonly _env: ConfigService,
     private readonly _userService: UserService,
+    private readonly metrics: MetricsService,
   ) {
     this._global_policies = JSON.parse(
       this._env.getOrThrow('GLOBAL_POLICIES_JSON'),
@@ -70,8 +74,21 @@ export class NotificationService {
       settings: { quiet_start, quiet_end, timezone_offset, ...user_policy },
     } = await this._userService.getById(user_id);
 
-    if (!this.checkGlobalPolicy(channel, kind, region))
-      return make_response('deny', 'blocked_by_global_policy');
+    if (!this.checkGlobalPolicy(channel, kind, region)) {
+      this.logger.warn({
+        user_id,
+        channel,
+        kind,
+        reason: 'blocked_by_global_policy',
+      });
+      this.metrics.increment('notification_evaluate_total', {
+        decision: 'deny',
+        reason: 'blocked_by_global_policy',
+      });
+      throw new ForbiddenException(
+        make_response('deny', 'blocked_by_global_policy'),
+      );
+    }
 
     if (
       !this.checkGeoPolicy(datetime, {
@@ -79,15 +96,58 @@ export class NotificationService {
         quiet_end,
         timezone_offset,
       })
-    )
-      return make_response('deny', 'blocked_by_quiet_policy');
+    ) {
+      this.logger.warn({
+        user_id,
+        channel,
+        kind,
+        reason: 'blocked_by_quiet_policy',
+      });
+      this.metrics.increment('notification_evaluate_total', {
+        decision: 'deny',
+        reason: 'blocked_by_quiet_policy',
+      });
+      throw new ForbiddenException(
+        make_response('deny', 'blocked_by_quiet_policy'),
+      );
+    }
 
-    if (!user_policy[`channel_${channel}`])
-      return make_response('deny', 'blocked_by_user_channel_policy');
+    if (!user_policy[`channel_${channel}`]) {
+      this.logger.warn({
+        user_id,
+        channel,
+        kind,
+        reason: 'blocked_by_user_channel_policy',
+      });
+      this.metrics.increment('notification_evaluate_total', {
+        decision: 'deny',
+        reason: 'blocked_by_user_channel_policy',
+      });
+      throw new ForbiddenException(
+        make_response('deny', 'blocked_by_user_channel_policy'),
+      );
+    }
 
-    if (!user_policy[`kind_${kind}`])
-      return make_response('deny', 'blocked_by_user_kind_policy');
+    if (!user_policy[`kind_${kind}`]) {
+      this.logger.warn({
+        user_id,
+        channel,
+        kind,
+        reason: 'blocked_by_user_kind_policy',
+      });
+      this.metrics.increment('notification_evaluate_total', {
+        decision: 'deny',
+        reason: 'blocked_by_user_kind_policy',
+      });
+      throw new ForbiddenException(
+        make_response('deny', 'blocked_by_user_kind_policy'),
+      );
+    }
 
+    this.logger.log({ user_id, channel, kind, decision: 'allow' });
+    this.metrics.increment('notification_evaluate_total', {
+      decision: 'allow',
+    });
     return make_response('allow');
   }
 }

@@ -18,3 +18,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    build: .
+    container_name: notification-preferences-service
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PORT: ${PORT:-3000}
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_DATABASE: ${PG_DATABASE}
+      DEFAULT_SETTINGS_JSON: ${DEFAULT_SETTINGS_JSON}
+      GLOBAL_POLICIES_JSON: ${GLOBAL_POLICIES_JSON}
+    depends_on:
+      postgres:
+        condition: service_healthy
